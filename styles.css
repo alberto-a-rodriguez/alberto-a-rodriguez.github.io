@@ -207,6 +207,33 @@ h3 {
     font-weight: 500;
 }
 
+.section-lead {
+    color: var(--muted);
+    max-width: 760px;
+    margin: -0.4rem 0 1.4rem;
+}
+
+.card.pattern {
+    margin-bottom: 1rem;
+}
+
+.card.pattern pre {
+    background: #0a0f1d;
+    border: 1px solid var(--border);
+    border-radius: 0.6rem;
+    padding: 1rem;
+    margin: 0.9rem 0 0.4rem;
+    overflow-x: auto;
+}
+
+.card.pattern code {
+    font-family: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: #d6deeb;
+    white-space: pre;
+}
+
 .site-footer {
     border-top: 1px solid var(--border);
     margin-top: 1.8rem;

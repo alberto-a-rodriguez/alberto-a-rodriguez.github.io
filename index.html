@@ -21,6 +21,7 @@
                 <ul class="nav-links">
                     <li><a href="#expertise">Expertise</a></li>
                     <li><a href="#projects">Projects</a></li>
+                    <li><a href="#patterns">SQL Patterns</a></li>
                     <li><a href="#architecture">Architecture</a></li>
                     <li><a href="#leadership">Leadership</a></li>
                     <li><a href="#contact">Contact</a></li>
@@ -95,6 +96,143 @@
                     <p class="meta">Focus: Reliability, observability, release safety</p>
                 </article>
             </div>
+        </section>
+
+        <section id="patterns" class="section container">
+            <h2>Featured SQL Patterns</h2>
+            <p class="section-lead">
+                Sanitized examples that demonstrate the techniques I use in production. Table and column names are
+                illustrative; no proprietary schemas or business rules are shown.
+            </p>
+
+            <article class="card pattern">
+                <h3>Deterministic Record Selection</h3>
+                <p>Pick one "best" record per entity, reproducibly, using a prioritized and fully deterministic tie-break hierarchy.</p>
+                <pre><code>-- Goal: pick ONE "best" record per customer per year, deterministically.
+-- Pattern: QUALIFY ROW_NUMBER() with a prioritized, fully deterministic ORDER BY.
+
+SELECT
+    src.customer_id,
+    src.entry_year,
+    src.address_type,
+    src.region_code
+FROM staging.customer_addresses AS src
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY src.customer_id, src.entry_year
+    ORDER BY
+        DECODE(src.address_type, 'permanent', 1, 'mailing', 2, 3) ASC,  -- categorical priority
+        CASE WHEN src.region_code IS NOT NULL THEN 0 ELSE 1 END ASC,    -- prefer complete data
+        src.updated_at DESC NULLS LAST,                                 -- most recent wins
+        src.record_hash ASC                                             -- deterministic final tiebreak
+) = 1;</code></pre>
+                <p class="meta">Guarantees one stable row per entity even when inputs tie.</p>
+            </article>
+
+            <article class="card pattern">
+                <h3>Multi-Source Standardization</h3>
+                <p>Unify many sources into one consistent attribute schema so new sources plug in without reshaping downstream models.</p>
+                <pre><code>-- Goal: unify many sources into ONE consistent attribute schema (EAV style).
+-- Pattern: modular CTEs + UNION ALL with a shared output contract.
+
+WITH academic_attributes AS (
+    SELECT customer_id, entry_year, 'academic' AS attribute_group,
+           attribute_type, attribute_value
+    FROM staging.source_academic
+),
+financial_attributes AS (
+    SELECT customer_id, entry_year, 'financial' AS attribute_group,
+           attribute_type, attribute_value
+    FROM staging.source_financial
+),
+demographic_attributes AS (
+    SELECT customer_id, entry_year, 'demographic' AS attribute_group,
+           attribute_type, attribute_value
+    FROM staging.source_demographic
+)
+
+SELECT customer_id, entry_year, attribute_group, attribute_type, attribute_value
+FROM academic_attributes
+UNION ALL
+SELECT customer_id, entry_year, attribute_group, attribute_type, attribute_value
+FROM financial_attributes
+UNION ALL
+SELECT customer_id, entry_year, attribute_group, attribute_type, attribute_value
+FROM demographic_attributes;</code></pre>
+                <p class="meta">Scalable and maintainable: new sources extend, they don't disrupt.</p>
+            </article>
+
+            <article class="card pattern">
+                <h3>Data-Quality Validation Bundle</h3>
+                <p>Pre-release checks that each return rows only on failure, turning "I think it's right" into evidence.</p>
+                <pre><code>-- Goal: catch problems before release. Each check returns rows ONLY on failure.
+
+-- 1) Grain uniqueness: no duplicate customer/year
+SELECT customer_id, entry_year, COUNT(*) AS record_count
+FROM analytics.customer_year_summary
+GROUP BY customer_id, entry_year
+HAVING COUNT(*) &gt; 1;
+
+-- 2) Not-null on required keys
+SELECT COUNT(*) AS null_key_count
+FROM analytics.customer_year_summary
+WHERE customer_id IS NULL
+   OR entry_year IS NULL;
+
+-- 3) Row-count reconciliation vs source of truth
+WITH source_count AS (
+    SELECT COUNT(DISTINCT customer_id) AS n FROM staging.source_of_truth
+),
+target_count AS (
+    SELECT COUNT(DISTINCT customer_id) AS n FROM analytics.customer_year_summary
+)
+SELECT s.n AS source_rows, t.n AS target_rows, (t.n - s.n) AS difference
+FROM source_count AS s
+CROSS JOIN target_count AS t
+WHERE ABS(t.n - s.n) &gt; 0;</code></pre>
+                <p class="meta">Evidence-based release confidence across the pipeline.</p>
+            </article>
+
+            <article class="card pattern">
+                <h3>Recursive Graph Walk with Cycle Prevention</h3>
+                <p>Group linked identifiers into a single entity by traversing a relationship graph, bounded against cycles and runaway recursion.</p>
+                <pre><code>-- Goal: group IDs that are linked (A-B, B-C => {A,B,C}) into one entity.
+-- Pattern: recursive CTE with a visited-path array and a depth limit.
+
+WITH RECURSIVE bidirectional_edges AS (
+    SELECT id1, id2 FROM staging.id_crosswalk
+    UNION
+    SELECT id2 AS id1, id1 AS id2 FROM staging.id_crosswalk
+),
+graph_walk AS (
+    -- anchor: start each id with itself
+    SELECT
+        e.id1 AS root_id,
+        e.id1 AS current_id,
+        ARRAY_CONSTRUCT(e.id1) AS visited_path,
+        0 AS depth
+    FROM bidirectional_edges AS e
+
+    UNION ALL
+
+    -- recurse: follow edges, skip visited ids, cap depth
+    SELECT
+        gw.root_id,
+        e.id2 AS current_id,
+        ARRAY_APPEND(gw.visited_path, e.id2) AS visited_path,
+        gw.depth + 1 AS depth
+    FROM graph_walk AS gw
+    JOIN bidirectional_edges AS e
+      ON gw.current_id = e.id1
+    WHERE NOT ARRAY_CONTAINS(e.id2::VARIANT, gw.visited_path)
+      AND gw.depth &lt; 50
+)
+SELECT
+    current_id AS member_id,
+    MIN(root_id) AS group_id   -- representative id per connected group
+FROM graph_walk
+GROUP BY current_id;</code></pre>
+                <p class="meta">Finds equivalent records without hard-coding chains.</p>
+            </article>
         </section>
 
         <section id="architecture" class="section container">
