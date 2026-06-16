@@ -51,6 +51,7 @@
                 <li>Data Modeling</li>
                 <li>ETL/ELT</li>
                 <li>Data Quality</li>
+                <li>AI-Assisted Development</li>
             </ul>
         </section>
 
@@ -68,6 +69,10 @@
                 <article class="card">
                     <h3>Quality and Reliability</h3>
                     <p>Applied test-to-story mapping, post-deployment validation, and production-safe checks to ensure trusted outputs at scale.</p>
+                </article>
+                <article class="card">
+                    <h3>AI-Assisted Engineering</h3>
+                    <p>Use modern AI tooling (Cursor, ChatGPT) to accelerate SQL, YAML, and documentation work, with every output reviewed and validated against requirements and the existing codebase.</p>
                 </article>
             </div>
         </section>
@@ -105,9 +110,11 @@
                 illustrative; no proprietary schemas or business rules are shown.
             </p>
 
-            <article class="card pattern">
-                <h3>Deterministic Record Selection</h3>
-                <p>Pick one "best" record per entity, reproducibly, using a prioritized and fully deterministic tie-break hierarchy.</p>
+            <details class="card pattern">
+                <summary>
+                    <span class="pattern-title">Deterministic Record Selection</span>
+                    <span class="pattern-desc">Pick one "best" record per entity, reproducibly, using a prioritized and fully deterministic tie-break hierarchy.</span>
+                </summary>
                 <pre><code>-- Goal: pick ONE "best" record per customer per year, deterministically.
 -- Pattern: QUALIFY ROW_NUMBER() with a prioritized, fully deterministic ORDER BY.
 
@@ -126,11 +133,13 @@ QUALIFY ROW_NUMBER() OVER (
         src.record_hash ASC                                             -- deterministic final tiebreak
 ) = 1;</code></pre>
                 <p class="meta">Guarantees one stable row per entity even when inputs tie.</p>
-            </article>
+            </details>
 
-            <article class="card pattern">
-                <h3>Multi-Source Standardization</h3>
-                <p>Unify many sources into one consistent attribute schema so new sources plug in without reshaping downstream models.</p>
+            <details class="card pattern">
+                <summary>
+                    <span class="pattern-title">Multi-Source Standardization</span>
+                    <span class="pattern-desc">Unify many sources into one consistent attribute schema so new sources plug in without reshaping downstream models.</span>
+                </summary>
                 <pre><code>-- Goal: unify many sources into ONE consistent attribute schema (EAV style).
 -- Pattern: modular CTEs + UNION ALL with a shared output contract.
 
@@ -159,11 +168,13 @@ UNION ALL
 SELECT customer_id, entry_year, attribute_group, attribute_type, attribute_value
 FROM demographic_attributes;</code></pre>
                 <p class="meta">Scalable and maintainable: new sources extend, they don't disrupt.</p>
-            </article>
+            </details>
 
-            <article class="card pattern">
-                <h3>Data-Quality Validation Bundle</h3>
-                <p>Pre-release checks that each return rows only on failure, turning "I think it's right" into evidence.</p>
+            <details class="card pattern">
+                <summary>
+                    <span class="pattern-title">Data-Quality Validation Bundle</span>
+                    <span class="pattern-desc">Pre-release checks that each return rows only on failure, turning "I think it's right" into evidence.</span>
+                </summary>
                 <pre><code>-- Goal: catch problems before release. Each check returns rows ONLY on failure.
 
 -- 1) Grain uniqueness: no duplicate customer/year
@@ -190,11 +201,13 @@ FROM source_count AS s
 CROSS JOIN target_count AS t
 WHERE ABS(t.n - s.n) &gt; 0;</code></pre>
                 <p class="meta">Evidence-based release confidence across the pipeline.</p>
-            </article>
+            </details>
 
-            <article class="card pattern">
-                <h3>Recursive Graph Walk with Cycle Prevention</h3>
-                <p>Group linked identifiers into a single entity by traversing a relationship graph, bounded against cycles and runaway recursion.</p>
+            <details class="card pattern">
+                <summary>
+                    <span class="pattern-title">Recursive Graph Walk with Cycle Prevention</span>
+                    <span class="pattern-desc">Group linked identifiers into a single entity by traversing a relationship graph, bounded against cycles and runaway recursion.</span>
+                </summary>
                 <pre><code>-- Goal: group IDs that are linked (A-B, B-C => {A,B,C}) into one entity.
 -- Pattern: recursive CTE with a visited-path array and a depth limit.
 
@@ -232,7 +245,7 @@ SELECT
 FROM graph_walk
 GROUP BY current_id;</code></pre>
                 <p class="meta">Finds equivalent records without hard-coding chains.</p>
-            </article>
+            </details>
         </section>
 
         <section id="architecture" class="section container">
