@@ -107,6 +107,17 @@
                     </ul>
                 </article>
             </div>
+            <h3 class="domains-title">Domains &amp; Competencies</h3>
+            <ul class="domain-tags">
+                <li>Data Modeling</li>
+                <li>Data Warehousing</li>
+                <li>Cloud Architecture (AWS)</li>
+                <li>Data Governance &amp; RBAC</li>
+                <li>Query Optimization</li>
+                <li>Data Quality</li>
+                <li>Multi-Tenant Architecture</li>
+                <li>Orchestration &amp; Scheduling</li>
+            </ul>
         </section>
 
         <section id="projects" class="section container">
@@ -143,6 +154,13 @@
                     <p class="star"><span class="star-label">Action</span> I built reusable validation bundles (grain uniqueness, null checks, and source-to-target row-count reconciliation) and tied them to a phased post-deployment validation process.</p>
                     <p class="star"><span class="star-label">Result</span> Turned "I think it's right" into evidence-based release confidence, with repeatable checks the whole team can run.</p>
                     <p class="meta">dbt tests · reconciliation · release safety</p>
+                </article>
+                <article class="card project">
+                    <h3>Feed Monitoring &amp; Status Rollup</h3>
+                    <p class="star"><span class="star-label">Problem</span> Scheduled data feeds run as many child transactions across tenants, so a single feed could report a confusing mix of statuses, making it hard to know whether delivery actually succeeded.</p>
+                    <p class="star"><span class="star-label">Action</span> I standardized raw run statuses, rolled child transactions up to one feed-level status using a severity-precedence rule (worst status wins), separated coordinated from standalone feeds, and surfaced scheduling and failure reasons for monitoring.</p>
+                    <p class="star"><span class="star-label">Result</span> A single, reliable status per feed run with clear failure context, enabling proactive monitoring of pipeline health across tenants.</p>
+                    <p class="meta">Feed orchestration · status thresholds · monitoring SQL</p>
                 </article>
             </div>
         </section>
@@ -290,10 +308,154 @@ FROM graph_walk
 GROUP BY current_id;</code></pre>
                 <p class="meta">Finds equivalent records without hard-coding chains.</p>
             </details>
+
+            <details class="card pattern">
+                <summary>
+                    <span class="pattern-title">Email Normalization with REGEXP</span>
+                    <span class="pattern-desc">Standardize and validate free-text email input so downstream matching and deduplication stay reliable.</span>
+                </summary>
+                <pre><code>-- Goal: clean inconsistent email input and flag invalid addresses.
+-- Pattern: REGEXP_REPLACE to strip noise + REGEXP_LIKE to validate format.
+
+SELECT
+    raw.contact_id,
+    -- lowercase, trim, and remove characters that are never valid in an email
+    REGEXP_REPLACE(LOWER(TRIM(raw.email)), '[^a-z0-9._%+\\-@]', '') AS email_clean,
+    -- basic structural validation: local@domain.tld
+    CASE
+        WHEN REGEXP_LIKE(
+                 REGEXP_REPLACE(LOWER(TRIM(raw.email)), '[^a-z0-9._%+\\-@]', ''),
+                 '^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}$'
+             )
+        THEN TRUE
+        ELSE FALSE
+    END AS is_valid_email
+FROM staging.raw_contacts AS raw;</code></pre>
+                <p class="meta">Clean, validated keys mean fewer duplicate identities downstream.</p>
+            </details>
+
+            <details class="card pattern">
+                <summary>
+                    <span class="pattern-title">Null-Safe Joins &amp; Backfill</span>
+                    <span class="pattern-desc">Join on optional keys without dropping rows, then backfill missing values from a record's neighbors.</span>
+                </summary>
+                <pre><code>-- Goal: match records on keys that may be NULL, and fill gaps from siblings.
+-- Patterns: EQUAL_NULL for null-safe joins; LAG/LEAD IGNORE NULLS to backfill.
+
+WITH joined AS (
+    SELECT
+        base.customer_id,
+        base.entry_year,
+        base.funnel_priority,
+        COALESCE(base.entry_term, supp.entry_term) AS entry_term
+    FROM staging.base_records AS base
+    LEFT JOIN staging.supplemental AS supp
+        -- EQUAL_NULL: TRUE when both sides match OR both are NULL
+        ON EQUAL_NULL(base.customer_id, supp.customer_id)
+       AND EQUAL_NULL(base.entry_year, supp.entry_year)
+)
+SELECT
+    customer_id,
+    entry_year,
+    -- fill missing term from the nearest non-null neighbor for that customer,
+    -- then fall back to a sensible default
+    COALESCE(
+        entry_term,
+        LAG(entry_term) IGNORE NULLS OVER (
+            PARTITION BY customer_id ORDER BY funnel_priority DESC),
+        LEAD(entry_term) IGNORE NULLS OVER (
+            PARTITION BY customer_id ORDER BY funnel_priority ASC),
+        'Fall'
+    ) AS entry_term_filled
+FROM joined;</code></pre>
+                <p class="meta">Keeps optional-key data complete and reporting consistent.</p>
+            </details>
+
+            <details class="card pattern">
+                <summary>
+                    <span class="pattern-title">Feed Status Rollup with Severity Precedence</span>
+                    <span class="pattern-desc">Collapse many child transaction statuses into one reliable feed-run status using a worst-status-wins rule, with scheduling context.</span>
+                </summary>
+                <pre><code>-- Goal: one trustworthy status per feed run from many child transactions.
+-- Pattern: map statuses to a severity rank, take the worst (MAX), map back.
+--          Severity: Timeout (4) > Failed (3) > Reset (2) > Success (1) > No Data (0)
+
+WITH transaction_status AS (
+    SELECT
+        feed_key,
+        feed_run_id,
+        DATE(run_scheduled_dt) AS run_date,
+        DECODE(INITCAP(run_status),
+            'No Data Delivered', 0,
+            'Success',           1,
+            'Reset',             2,
+            'Failed',            3,
+            'Timeout',           4
+        ) AS severity
+    FROM staging.feed_transaction_runs
+)
+SELECT
+    feed_key,
+    feed_run_id,
+    run_date,
+    -- worst child status becomes the feed-run status
+    DECODE(MAX(severity),
+        0, 'No Data Delivered',
+        1, 'Success',
+        2, 'Reset',
+        3, 'Failed',
+        4, 'Timeout'
+    ) AS feed_run_status
+FROM transaction_status
+GROUP BY feed_key, feed_run_id, run_date;</code></pre>
+                <p class="meta">Turns noisy per-transaction logs into clear, monitorable feed health.</p>
+            </details>
+
+            <article class="card">
+                <h3>Advanced SQL Techniques I Use</h3>
+                <p>Breadth of production-grade SQL patterns I work with regularly (Snowflake):</p>
+                <ul class="technique-tags">
+                    <li>Recursive CTEs (cycle-bounded)</li>
+                    <li>QUALIFY + ROW_NUMBER dedup</li>
+                    <li>LAG / LEAD IGNORE NULLS</li>
+                    <li>FIRST_VALUE (conditional)</li>
+                    <li>MIN_BY / MAX_BY</li>
+                    <li>EQUAL_NULL null-safe joins</li>
+                    <li>CASE-driven JOIN predicates</li>
+                    <li>ARRAY_EXCEPT / ARRAY_GENERATE_RANGE</li>
+                    <li>LEAST / GREATEST partitioning</li>
+                    <li>DECODE in ORDER BY</li>
+                    <li>State-machine status logic</li>
+                    <li>PIVOT / UNPIVOT reshaping</li>
+                    <li>MERGE upserts</li>
+                    <li>Fiscal / academic date math</li>
+                    <li>REGEXP cleaning &amp; validation</li>
+                </ul>
+            </article>
         </section>
 
         <section id="architecture" class="section container">
             <h2>How I Design for Scale</h2>
+            <p class="section-lead">
+                A generalized view of the layered pipeline architecture I work in. Labels are illustrative; no
+                proprietary systems or data are shown.
+            </p>
+            <div class="card diagram-card">
+                <pre class="mermaid">
+flowchart LR
+    A[Source Systems<br/>Intake UI, SIS/CRM,<br/>Batch, Legacy] --> B[Ingestion<br/>Object Storage + Feeds]
+    B --> C[Staging<br/>raw, typed models]
+    C --> D[Standardization<br/>common format layer]
+    D --> E[Analytics<br/>dimensional models]
+    E --> F[Exports &amp; Portals<br/>partner-facing delivery]
+    G[(Reference &amp; Config)] -.-> D
+    H[Data Quality &amp; Tests] -.-> C
+    H -.-> D
+    H -.-> E
+    I[Orchestration &amp; Scheduling] -.-> B
+    I -.-> F
+                </pre>
+            </div>
             <div class="grid two">
                 <article class="card">
                     <h3>Composable Modeling Strategy</h3>
@@ -366,5 +528,19 @@ GROUP BY current_id;</code></pre>
     </footer>
 
     <script src="script.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#1d2b47',
+                primaryBorderColor: '#7fe0cf',
+                primaryTextColor: '#e5e7eb',
+                lineColor: '#7fe0cf',
+                fontSize: '14px'
+            }
+        });
+    </script>
 </body>
 </html>
