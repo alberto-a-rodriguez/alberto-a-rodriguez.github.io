@@ -453,6 +453,17 @@ details.card.pattern > .meta {
     color: var(--primary);
 }
 
+.footer-meta {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.footer-meta img {
+    vertical-align: middle;
+}
+
 #back-to-top {
     position: fixed;
     right: 1.5rem;
