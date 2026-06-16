@@ -250,16 +250,30 @@ details.card.pattern > summary::-webkit-details-marker {
 details.card.pattern > summary::after {
     content: "+";
     position: absolute;
-    top: 0.9rem;
+    top: 0.85rem;
     right: 1rem;
-    font-size: 1.3rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 700;
     line-height: 1;
-    color: var(--primary);
-    transition: transform 0.2s ease;
+    color: #0b1120;
+    background: #7fe0cf;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(127, 224, 207, 0.18);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 details.card.pattern[open] > summary::after {
     content: "\2013";
+}
+
+details.card.pattern > summary:hover::after {
+    background: #a7ebde;
+    box-shadow: 0 0 0 5px rgba(127, 224, 207, 0.28);
 }
 
 details.card.pattern > summary:hover {
