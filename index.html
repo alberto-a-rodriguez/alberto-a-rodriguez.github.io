@@ -284,6 +284,53 @@ WHERE ABS(t.n - s.n) &gt; 0;</code></pre>
 
             <details class="card pattern">
                 <summary>
+                    <span class="pattern-title">Identity Resolution (Person Matching)</span>
+                    <span class="pattern-desc">Link records that represent the same person across systems using normalized keys and ranked match rules, producing an ID crosswalk for downstream grouping.</span>
+                </summary>
+                <pre><code>-- Goal: find record pairs that are the same person across sources,
+--       then emit an ID crosswalk that downstream grouping can consume.
+-- Pattern: deterministic matching on normalized keys + a match-tier rank.
+
+WITH normalized AS (
+    SELECT
+        source_system,
+        record_id,
+        LOWER(TRIM(email_clean))            AS email_key,
+        UPPER(TRIM(last_name))              AS last_name_key,
+        LEFT(UPPER(TRIM(first_name)), 1)    AS first_initial,
+        birth_date
+    FROM staging.normalized_persons
+),
+candidate_pairs AS (
+    SELECT
+        a.record_id AS id1,
+        b.record_id AS id2,
+        -- match tier: 1 = strongest signal
+        CASE
+            WHEN a.email_key = b.email_key                      THEN 1  -- exact email
+            WHEN a.last_name_key = b.last_name_key
+             AND a.birth_date    = b.birth_date                 THEN 2  -- name + DOB
+            WHEN a.last_name_key = b.last_name_key
+             AND a.first_initial = b.first_initial
+             AND a.birth_date    = b.birth_date                 THEN 3  -- partial name + DOB
+        END AS match_tier
+    FROM normalized AS a
+    JOIN normalized AS b
+      ON a.record_id &lt; b.record_id            -- each unordered pair once
+     AND a.source_system &lt;&gt; b.source_system    -- only link across systems
+)
+SELECT id1, id2, match_tier
+FROM candidate_pairs
+WHERE match_tier IS NOT NULL
+-- keep only the strongest tier for each pair
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY id1, id2 ORDER BY match_tier
+) = 1;</code></pre>
+                <p class="meta">Deterministic, explainable matches feed the crosswalk that groups a person's records together.</p>
+            </details>
+
+            <details class="card pattern">
+                <summary>
                     <span class="pattern-title">Recursive Graph Walk with Cycle Prevention</span>
                     <span class="pattern-desc">Group linked identifiers into a single entity by traversing a relationship graph, bounded against cycles and runaway recursion.</span>
                 </summary>
@@ -447,6 +494,7 @@ GROUP BY feed_key, feed_run_id, run_date;</code></pre>
                     <li>MERGE upserts</li>
                     <li>Fiscal / academic date math</li>
                     <li>REGEXP cleaning &amp; validation</li>
+                    <li>Identity resolution / person matching</li>
                 </ul>
             </article>
         </section>
