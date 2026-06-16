@@ -1,25 +1,150 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Alberto Rodriguez</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Alberto Rodriguez - Data Engineer portfolio featuring Snowflake, dbt, advanced SQL, and production data pipeline delivery.">
+    <meta property="og:title" content="Alberto Rodriguez | Data Engineer">
+    <meta property="og:description" content="Data engineering portfolio focused on scalable Snowflake + dbt pipelines, advanced SQL logic, and quality-first delivery.">
+    <meta property="og:type" content="website">
+    <title>Alberto Rodriguez | Data Engineer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <header class="site-header">
+        <div class="container nav-wrap">
+            <a class="brand" href="#top">AR</a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#expertise">Expertise</a></li>
+                    <li><a href="#projects">Projects</a></li>
+                    <li><a href="#architecture">Architecture</a></li>
+                    <li><a href="#leadership">Leadership</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
-<h1>Alberto Rodriguez</h1>
+    <main id="top">
+        <section class="hero container">
+            <p class="eyebrow">Data Engineer</p>
+            <h1>Alberto Rodriguez</h1>
+            <p class="hero-copy">
+                I build scalable data products using Snowflake, dbt, and advanced SQL, with a strong focus on data quality,
+                deterministic business logic, and production-ready delivery across marketing and analytics pipelines.
+            </p>
+            <div class="cta-row">
+                <a class="btn btn-primary" href="#projects">View Case Studies</a>
+                <a class="btn btn-secondary" href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                <a class="btn btn-secondary" href="https://github.com/alberto-a-rodriguez" target="_blank" rel="noopener noreferrer">GitHub</a>
+            </div>
+            <ul class="skill-tags">
+                <li>Snowflake</li>
+                <li>dbt</li>
+                <li>Advanced SQL</li>
+                <li>Python</li>
+                <li>Data Modeling</li>
+                <li>ETL/ELT</li>
+                <li>Data Quality</li>
+            </ul>
+        </section>
 
-<h2>Data Engineer</h2>
+        <section id="expertise" class="section container">
+            <h2>Core Expertise</h2>
+            <div class="grid three">
+                <article class="card">
+                    <h3>Pipeline Engineering</h3>
+                    <p>Designed and maintained multi-source ingestion and transformation workflows from source systems through standardized and export-ready layers.</p>
+                </article>
+                <article class="card">
+                    <h3>Logic and Standardization</h3>
+                    <p>Implemented deterministic transformation patterns for attribute normalization, intake routing, precedence handling, and repeatable business rules.</p>
+                </article>
+                <article class="card">
+                    <h3>Quality and Reliability</h3>
+                    <p>Applied test-to-story mapping, post-deployment validation, and production-safe checks to ensure trusted outputs at scale.</p>
+                </article>
+            </div>
+        </section>
 
-<p>Welcome to my portfolio website.</p>
+        <section id="projects" class="section container">
+            <h2>Selected Engineering Work</h2>
+            <div class="grid two">
+                <article class="card project">
+                    <h3>Multi-Source Common Format Standardization</h3>
+                    <p>Consolidated parallel intake paths into a single standard model structure with reusable snippets and consistent attribute definitions.</p>
+                    <p class="meta">Focus: Standardization, data modeling, maintainability</p>
+                </article>
+                <article class="card project">
+                    <h3>Financial Aid Attribute Harmonization</h3>
+                    <p>Built normalized transformations for financial aid attributes across source variants while preserving consistent downstream semantics.</p>
+                    <p class="meta">Focus: Rule harmonization, data quality, traceability</p>
+                </article>
+                <article class="card project">
+                    <h3>Cohort and Contact Logic Refinement</h3>
+                    <p>Enhanced cohort and contact common-format logic with clear routing and repeatable transformation behavior for analytics consumption.</p>
+                    <p class="meta">Focus: Business logic, repeatability, analytics readiness</p>
+                </article>
+                <article class="card project">
+                    <h3>Quality Check Bundles and Validation Frameworks</h3>
+                    <p>Established robust validation patterns for release confidence, including reconciliation checks, assertion-driven testing, and post-deploy verification.</p>
+                    <p class="meta">Focus: Reliability, observability, release safety</p>
+                </article>
+            </div>
+        </section>
 
-<h3>Skills</h3>
+        <section id="architecture" class="section container">
+            <h2>How I Design for Scale</h2>
+            <div class="grid two">
+                <article class="card">
+                    <h3>Composable Modeling Strategy</h3>
+                    <ul>
+                        <li>Small reusable transformation units for clear ownership</li>
+                        <li>Consistent grain and naming conventions across layers</li>
+                        <li>Controlled union/routing patterns for multi-intake systems</li>
+                    </ul>
+                </article>
+                <article class="card">
+                    <h3>Advanced SQL Patterning</h3>
+                    <ul>
+                        <li>Window function tie-breakers for deterministic selection</li>
+                        <li>Recursive and state-based logic for complex relationships</li>
+                        <li>Null-safe and precedence-driven decision frameworks</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
 
-<ul>
-    <li>Snowflake</li>
-    <li>SQL</li>
-    <li>Python</li>
-    <li>Git</li>
-    <li>ETL Development</li>
-</ul>
+        <section id="leadership" class="section container">
+            <h2>Technical Leadership</h2>
+            <div class="grid two">
+                <article class="card">
+                    <h3>Enablement and Training</h3>
+                    <p>Developed structured learning materials and practical walkthroughs to accelerate onboarding and build shared understanding of pipeline architecture.</p>
+                </article>
+                <article class="card">
+                    <h3>Documentation and Decision Discipline</h3>
+                    <p>Authored architecture decision records, quality standards, and implementation references that improved transparency and long-term maintainability.</p>
+                </article>
+            </div>
+        </section>
+    </main>
 
+    <footer id="contact" class="site-footer">
+        <div class="container footer-wrap">
+            <p>Open to Data Engineering opportunities.</p>
+            <div class="footer-links">
+                <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                <a href="https://github.com/alberto-a-rodriguez" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="mailto:alberto.a.rodriguez637@gmail.com">Email</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>
