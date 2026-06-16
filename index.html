@@ -55,6 +55,31 @@
             </ul>
         </section>
 
+        <section class="section container">
+            <div class="stats-strip">
+                <div class="stat">
+                    <span class="stat-number">500+</span>
+                    <span class="stat-label">Commits across enterprise data repositories since 2021</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">25+</span>
+                    <span class="stat-label">Features and tickets delivered end to end</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">70+</span>
+                    <span class="stat-label">Technical documents authored (ADRs, tests, training)</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">54k+</span>
+                    <span class="stat-label">Records validated in a single feature release</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">1,400+</span>
+                    <span class="stat-label">dbt models in the platform I contribute to</span>
+                </div>
+            </div>
+        </section>
+
         <section id="expertise" class="section container">
             <h2>Core Expertise</h2>
             <div class="grid three">
@@ -86,26 +111,38 @@
 
         <section id="projects" class="section container">
             <h2>Selected Engineering Work</h2>
+            <p class="section-lead">
+                Sanitized case studies framed as problem, action, and result. Details are generalized to protect
+                proprietary logic and data.
+            </p>
             <div class="grid two">
                 <article class="card project">
-                    <h3>Multi-Source Common Format Standardization</h3>
-                    <p>Consolidated parallel intake paths into a single standard model structure with reusable snippets and consistent attribute definitions.</p>
-                    <p class="meta">Focus: Standardization, data modeling, maintainability</p>
+                    <h3>Multi-Source Attribute Standardization</h3>
+                    <p class="star"><span class="star-label">Problem</span> The same student attributes arrived from several intake paths (live, batch, and legacy), each with different schemas and refresh rules, making downstream analytics inconsistent and hard to maintain.</p>
+                    <p class="star"><span class="star-label">Action</span> I designed a common-format layer built from small, reusable transformation units, routed records by intake type, and aligned values to a shared attribute-type reference so every source produced an identical output contract.</p>
+                    <p class="star"><span class="star-label">Result</span> Analytics consume one predictable model regardless of source; adding a new source extends the pattern instead of reshaping downstream logic.</p>
+                    <p class="meta">Snowflake · dbt (ephemeral + table) · modular SQL</p>
                 </article>
                 <article class="card project">
-                    <h3>Financial Aid Attribute Harmonization</h3>
-                    <p>Built normalized transformations for financial aid attributes across source variants while preserving consistent downstream semantics.</p>
-                    <p class="meta">Focus: Rule harmonization, data quality, traceability</p>
+                    <h3>Cross-Source Exam Score Normalization</h3>
+                    <p class="star"><span class="star-label">Problem</span> Standardized test scores were represented differently across partner, batch, and legacy sources (composite vs. sectional, differing scales), so they could not be compared or ranked reliably.</p>
+                    <p class="star"><span class="star-label">Action</span> I implemented intake-specific transformations that normalize each source to a common scale, then unioned and routed them through a single delivery path, with end-to-end tests and post-deployment validation for each intake.</p>
+                    <p class="star"><span class="star-label">Result</span> A single normalized score per student; <strong>54,000+ records validated</strong> across intake paths before release, with documented test-to-story coverage.</p>
+                    <p class="meta">Normalization rules · UNION routing · E2E test suite</p>
                 </article>
                 <article class="card project">
-                    <h3>Cohort and Contact Logic Refinement</h3>
-                    <p>Enhanced cohort and contact common-format logic with clear routing and repeatable transformation behavior for analytics consumption.</p>
-                    <p class="meta">Focus: Business logic, repeatability, analytics readiness</p>
+                    <h3>Deterministic Audience Precedence</h3>
+                    <p class="star"><span class="star-label">Problem</span> A contact could qualify for multiple audience segments at once, producing ambiguous, hard-to-explain assignments that affected reporting consistency.</p>
+                    <p class="star"><span class="star-label">Action</span> I helped define and document a precedence framework (ADR-backed) encoded with window functions and <code>QUALIFY</code>, so the highest-priority segment is selected deterministically per product type.</p>
+                    <p class="star"><span class="star-label">Result</span> Predictable, explainable segment assignment with a documented decision record the team can maintain and audit.</p>
+                    <p class="meta">Window functions · QUALIFY · ADR documentation</p>
                 </article>
                 <article class="card project">
-                    <h3>Quality Check Bundles and Validation Frameworks</h3>
-                    <p>Established robust validation patterns for release confidence, including reconciliation checks, assertion-driven testing, and post-deploy verification.</p>
-                    <p class="meta">Focus: Reliability, observability, release safety</p>
+                    <h3>Quality Check Bundles &amp; Validation</h3>
+                    <p class="star"><span class="star-label">Problem</span> Releases relied on manual spot-checks, leaving room for silent data issues to reach production.</p>
+                    <p class="star"><span class="star-label">Action</span> I built reusable validation bundles (grain uniqueness, null checks, and source-to-target row-count reconciliation) and tied them to a phased post-deployment validation process.</p>
+                    <p class="star"><span class="star-label">Result</span> Turned "I think it's right" into evidence-based release confidence, with repeatable checks the whole team can run.</p>
+                    <p class="meta">dbt tests · reconciliation · release safety</p>
                 </article>
             </div>
         </section>
