@@ -214,13 +214,13 @@ h3 {
 }
 
 .contact-link {
-    color: #cdd9ec;
+    color: #7fe0cf;
     text-decoration: none;
     word-break: break-word;
 }
 
 .contact-link:hover {
-    color: #e8eefc;
+    color: #a7ebde;
     text-decoration: underline;
 }
 
