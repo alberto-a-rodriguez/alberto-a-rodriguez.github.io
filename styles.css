@@ -213,6 +213,16 @@ h3 {
     margin: -0.4rem 0 1.4rem;
 }
 
+.contact-link {
+    color: var(--primary);
+    text-decoration: none;
+    word-break: break-word;
+}
+
+.contact-link:hover {
+    text-decoration: underline;
+}
+
 .card.pattern {
     margin-bottom: 1rem;
 }
