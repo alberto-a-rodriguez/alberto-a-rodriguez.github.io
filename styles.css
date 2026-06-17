@@ -147,6 +147,32 @@ h1 {
     border-color: var(--primary);
 }
 
+.btn-resume {
+    background: #d93025;
+    color: #ffffff;
+    border-color: #d93025;
+    box-shadow: 0 4px 14px rgba(217, 48, 37, 0.35);
+}
+
+.btn-resume:hover {
+    background: #b3261e;
+    border-color: #b3261e;
+    box-shadow: 0 6px 18px rgba(217, 48, 37, 0.45);
+}
+
+.btn-resume .pdf-tag {
+    display: inline-block;
+    margin-right: 0.5rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 0.25rem;
+    background: #ffffff;
+    color: #d93025;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+}
+
 .skill-tags {
     list-style: none;
     display: flex;
