@@ -148,10 +148,52 @@ h1 {
 }
 
 .btn-resume {
+    position: relative;
+    overflow: hidden;
     background: #d93025;
     color: #ffffff;
     border-color: #d93025;
     box-shadow: 0 4px 14px rgba(217, 48, 37, 0.35);
+}
+
+.btn-resume > * {
+    position: relative;
+    z-index: 1;
+}
+
+.btn-resume::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.55) 50%,
+        transparent 100%
+    );
+    transform: skewX(-20deg);
+    animation: resume-shine 10s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes resume-shine {
+    0%,
+    82% {
+        left: -150%;
+    }
+    92%,
+    100% {
+        left: 150%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-resume::after {
+        animation: none;
+    }
 }
 
 .btn-resume:hover {
