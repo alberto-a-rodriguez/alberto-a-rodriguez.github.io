@@ -131,10 +131,10 @@
                 <li>Data Modeling</li>
                 <li>Data Warehousing</li>
                 <li>Cloud Architecture (AWS)</li>
-                <li>Data Governance &amp; RBAC</li>
+                <li>Data Governance</li>
                 <li>Query Optimization</li>
                 <li>Data Quality</li>
-                <li>Multi-Tenant Architecture</li>
+                <li>Multi-Client Data Architecture</li>
                 <li>Orchestration &amp; Scheduling</li>
             </ul>
         </section>
@@ -148,22 +148,22 @@
             <div class="grid two">
                 <article class="card project">
                     <h3>Multi-Source Attribute Standardization</h3>
-                    <p class="star"><span class="star-label">Problem</span> The same student attributes arrived from several intake paths (live, batch, and legacy), each with different schemas and refresh rules, making downstream analytics inconsistent and hard to maintain.</p>
+                    <p class="star"><span class="star-label">Problem</span> The same records arrived from several intake paths (live, batch, and legacy), each with different schemas and refresh rules, making downstream analytics inconsistent and hard to maintain.</p>
                     <p class="star"><span class="star-label">Action</span> I designed a common-format layer built from small, reusable transformation units, routed records by intake type, and aligned values to a shared attribute-type reference so every source produced an identical output contract.</p>
                     <p class="star"><span class="star-label">Result</span> Analytics consume one predictable model regardless of source; adding a new source extends the pattern instead of reshaping downstream logic.</p>
                     <p class="meta">Snowflake · dbt (ephemeral + table) · modular SQL</p>
                 </article>
                 <article class="card project">
-                    <h3>Cross-Source Exam Score Normalization</h3>
-                    <p class="star"><span class="star-label">Problem</span> Standardized test scores were represented differently across partner, batch, and legacy sources (composite vs. sectional, differing scales), so they could not be compared or ranked reliably.</p>
+                    <h3>Cross-Source Score Normalization</h3>
+                    <p class="star"><span class="star-label">Problem</span> Numeric scores were represented differently across external, batch, and legacy sources (aggregate vs. component, differing scales), so they could not be compared or ranked reliably.</p>
                     <p class="star"><span class="star-label">Action</span> I implemented intake-specific transformations that normalize each source to a common scale, then unioned and routed them through a single delivery path, with end-to-end tests and post-deployment validation for each intake.</p>
-                    <p class="star"><span class="star-label">Result</span> A single normalized score per student; <strong>54,000+ records validated</strong> across intake paths before release, with documented test-to-story coverage.</p>
+                    <p class="star"><span class="star-label">Result</span> A single normalized score per entity; <strong>54,000+ records validated</strong> across intake paths before release, with documented test-to-story coverage.</p>
                     <p class="meta">Normalization rules · UNION routing · E2E test suite</p>
                 </article>
                 <article class="card project">
-                    <h3>Deterministic Audience Precedence</h3>
-                    <p class="star"><span class="star-label">Problem</span> A contact could qualify for multiple audience segments at once, producing ambiguous, hard-to-explain assignments that affected reporting consistency.</p>
-                    <p class="star"><span class="star-label">Action</span> I helped define and document a precedence framework (ADR-backed) encoded with window functions and <code>QUALIFY</code>, so the highest-priority segment is selected deterministically per product type.</p>
+                    <h3>Deterministic Segment Precedence</h3>
+                    <p class="star"><span class="star-label">Problem</span> A record could qualify for multiple segments at once, producing ambiguous, hard-to-explain assignments that affected reporting consistency.</p>
+                    <p class="star"><span class="star-label">Action</span> I helped define and document a precedence framework (ADR-backed) encoded with window functions and <code>QUALIFY</code>, so the highest-priority segment is selected deterministically per category.</p>
                     <p class="star"><span class="star-label">Result</span> Predictable, explainable segment assignment with a documented decision record the team can maintain and audit.</p>
                     <p class="meta">Window functions · QUALIFY · ADR documentation</p>
                 </article>
@@ -176,9 +176,9 @@
                 </article>
                 <article class="card project">
                     <h3>Feed Monitoring &amp; Status Rollup</h3>
-                    <p class="star"><span class="star-label">Problem</span> Scheduled data feeds run as many child transactions across tenants, so a single feed could report a confusing mix of statuses, making it hard to know whether delivery actually succeeded.</p>
+                    <p class="star"><span class="star-label">Problem</span> Scheduled data feeds run as many child transactions across clients, so a single feed could report a confusing mix of statuses, making it hard to know whether delivery actually succeeded.</p>
                     <p class="star"><span class="star-label">Action</span> I standardized raw run statuses, rolled child transactions up to one feed-level status using a severity-precedence rule (worst status wins), separated coordinated from standalone feeds, and surfaced scheduling and failure reasons for monitoring.</p>
-                    <p class="star"><span class="star-label">Result</span> A single, reliable status per feed run with clear failure context, enabling proactive monitoring of pipeline health across tenants.</p>
+                    <p class="star"><span class="star-label">Result</span> A single, reliable status per feed run with clear failure context, enabling proactive monitoring of pipeline health across clients.</p>
                     <p class="meta">Feed orchestration · status thresholds · monitoring SQL</p>
                 </article>
             </div>
@@ -201,12 +201,12 @@
 
 SELECT
     src.customer_id,
-    src.entry_year,
+    src.record_year,
     src.address_type,
     src.region_code
 FROM staging.customer_addresses AS src
 QUALIFY ROW_NUMBER() OVER (
-    PARTITION BY src.customer_id, src.entry_year
+    PARTITION BY src.customer_id, src.record_year
     ORDER BY
         DECODE(src.address_type, 'permanent', 1, 'mailing', 2, 3) ASC,  -- categorical priority
         CASE WHEN src.region_code IS NOT NULL THEN 0 ELSE 1 END ASC,    -- prefer complete data
@@ -224,29 +224,29 @@ QUALIFY ROW_NUMBER() OVER (
                 <pre><code>-- Goal: unify many sources into ONE consistent attribute schema (EAV style).
 -- Pattern: modular CTEs + UNION ALL with a shared output contract.
 
-WITH academic_attributes AS (
-    SELECT customer_id, entry_year, 'academic' AS attribute_group,
+WITH profile_attributes AS (
+    SELECT customer_id, record_year, 'profile' AS attribute_group,
            attribute_type, attribute_value
-    FROM staging.source_academic
+    FROM staging.source_profile
 ),
 financial_attributes AS (
-    SELECT customer_id, entry_year, 'financial' AS attribute_group,
+    SELECT customer_id, record_year, 'financial' AS attribute_group,
            attribute_type, attribute_value
     FROM staging.source_financial
 ),
 demographic_attributes AS (
-    SELECT customer_id, entry_year, 'demographic' AS attribute_group,
+    SELECT customer_id, record_year, 'demographic' AS attribute_group,
            attribute_type, attribute_value
     FROM staging.source_demographic
 )
 
-SELECT customer_id, entry_year, attribute_group, attribute_type, attribute_value
-FROM academic_attributes
+SELECT customer_id, record_year, attribute_group, attribute_type, attribute_value
+FROM profile_attributes
 UNION ALL
-SELECT customer_id, entry_year, attribute_group, attribute_type, attribute_value
+SELECT customer_id, record_year, attribute_group, attribute_type, attribute_value
 FROM financial_attributes
 UNION ALL
-SELECT customer_id, entry_year, attribute_group, attribute_type, attribute_value
+SELECT customer_id, record_year, attribute_group, attribute_type, attribute_value
 FROM demographic_attributes;</code></pre>
                 <p class="meta">Scalable and maintainable: new sources extend, they don't disrupt.</p>
             </details>
@@ -259,16 +259,16 @@ FROM demographic_attributes;</code></pre>
                 <pre><code>-- Goal: catch problems before release. Each check returns rows ONLY on failure.
 
 -- 1) Grain uniqueness: no duplicate customer/year
-SELECT customer_id, entry_year, COUNT(*) AS record_count
+SELECT customer_id, record_year, COUNT(*) AS record_count
 FROM analytics.customer_year_summary
-GROUP BY customer_id, entry_year
+GROUP BY customer_id, record_year
 HAVING COUNT(*) &gt; 1;
 
 -- 2) Not-null on required keys
 SELECT COUNT(*) AS null_key_count
 FROM analytics.customer_year_summary
 WHERE customer_id IS NULL
-   OR entry_year IS NULL;
+   OR record_year IS NULL;
 
 -- 3) Row-count reconciliation vs source of truth
 WITH source_count AS (
@@ -411,28 +411,28 @@ FROM staging.raw_contacts AS raw;</code></pre>
 WITH joined AS (
     SELECT
         base.customer_id,
-        base.entry_year,
-        base.funnel_priority,
-        COALESCE(base.entry_term, supp.entry_term) AS entry_term
+        base.record_year,
+        base.source_priority,
+        COALESCE(base.period_code, supp.period_code) AS period_code
     FROM staging.base_records AS base
     LEFT JOIN staging.supplemental AS supp
         -- EQUAL_NULL: TRUE when both sides match OR both are NULL
         ON EQUAL_NULL(base.customer_id, supp.customer_id)
-       AND EQUAL_NULL(base.entry_year, supp.entry_year)
+       AND EQUAL_NULL(base.record_year, supp.record_year)
 )
 SELECT
     customer_id,
-    entry_year,
+    record_year,
     -- fill missing term from the nearest non-null neighbor for that customer,
     -- then fall back to a sensible default
     COALESCE(
-        entry_term,
-        LAG(entry_term) IGNORE NULLS OVER (
-            PARTITION BY customer_id ORDER BY funnel_priority DESC),
-        LEAD(entry_term) IGNORE NULLS OVER (
-            PARTITION BY customer_id ORDER BY funnel_priority ASC),
-        'Fall'
-    ) AS entry_term_filled
+        period_code,
+        LAG(period_code) IGNORE NULLS OVER (
+            PARTITION BY customer_id ORDER BY source_priority DESC),
+        LEAD(period_code) IGNORE NULLS OVER (
+            PARTITION BY customer_id ORDER BY source_priority ASC),
+        'UNKNOWN'
+    ) AS period_code_filled
 FROM joined;</code></pre>
                 <p class="meta">Keeps optional-key data complete and reporting consistent.</p>
             </details>
@@ -494,7 +494,7 @@ GROUP BY feed_key, feed_run_id, run_date;</code></pre>
                     <li>State-machine status logic</li>
                     <li>PIVOT / UNPIVOT reshaping</li>
                     <li>MERGE upserts</li>
-                    <li>Fiscal / academic date math</li>
+                    <li>Fiscal / period date math</li>
                     <li>REGEXP cleaning &amp; validation</li>
                     <li>Identity resolution / person matching</li>
                 </ul>
@@ -510,11 +510,11 @@ GROUP BY feed_key, feed_run_id, run_date;</code></pre>
             <div class="card diagram-card">
                 <pre class="mermaid">
 flowchart LR
-    A[Source Systems<br/>Intake UI, SIS/CRM,<br/>Batch, Legacy] --> B[Ingestion<br/>Object Storage + Feeds]
+    A[Source Systems<br/>Intake UI, CRM/ERP,<br/>Batch, Legacy] --> B[Ingestion<br/>Object Storage + Feeds]
     B --> C[Staging<br/>raw, typed models]
     C --> D[Standardization<br/>common format layer]
     D --> E[Analytics<br/>dimensional models]
-    E --> F[Exports &amp; Portals<br/>partner-facing delivery]
+    E --> F[Exports &amp; APIs<br/>client-facing delivery]
     G[(Reference &amp; Config)] -.-> D
     H[Data Quality &amp; Tests] -.-> C
     H -.-> D
@@ -564,7 +564,7 @@ flowchart LR
                         <li><strong>1 report split into 20+</strong> section-level reports via complex Excel formulas, flagging complete vs. incomplete with names and dates</li>
                         <li><strong>Up to 12x faster</strong> check-in: built an Excel system (DoD ID lookup) that cut sign-in from 30-60s to under 5s per person, clearing long lines of senior officers</li>
                     </ul>
-                    <p>The same instinct drives my work today: turn one large, messy source into clean, standardized, audience-specific outputs.</p>
+                    <p>The same instinct drives my work today: turn one large, messy source into clean, standardized, segment-specific outputs.</p>
                 </article>
             </div>
         </section>
@@ -599,7 +599,7 @@ flowchart LR
                 <img src="https://api.visitorbadge.io/api/visitors?path=alberto-a-rodriguez.github.io&label=Visitors&countColor=%237fe0cf&labelColor=%231d2b47&style=flat"
                      alt="Visitor count" loading="lazy" />
             </p>
-            <p class="footer-meta">Current as of June 25, 2026</p>
+            <p class="footer-meta">Current as of June 30, 2026</p>
         </div>
     </footer>
 
